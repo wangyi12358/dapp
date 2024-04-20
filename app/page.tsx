@@ -32,6 +32,7 @@ export default function Home() {
   async function initAccounts() {
     const _accounts = await web3.eth.getAccounts();
     console.log('_accounts==', _accounts)
+
     const _balances = await Promise.all(_accounts.map(x => web3.eth.getBalance(x)));
     setAccounts(_accounts.map((address, i) => ({
       address,
