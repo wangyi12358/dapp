@@ -25,8 +25,6 @@ export function AdminPageContent() {
 	const [withdrawAmount, setWithdrawAmount] = useState('');
 	const [depositEthAmount, setDepositEthAmount] = useState('');
 	const [approveAmount, setApproveAmount] = useState('');
-	const [withdrawTokenTo, setWithdrawTokenTo] = useState('');
-	const [withdrawTokenAmount, setWithdrawTokenAmount] = useState('');
 
 	const { data: marketEthBalance, refetch: refetchMarketEth } = useBalance({
 		address: TOKEN_MARKET_ADDRESS,
@@ -85,12 +83,6 @@ export function AdminPageContent() {
 		isSuccess: isApproveSuccess,
 	} = useWriteContract();
 
-	const {
-		mutateAsync: withdrawTokenMutateAsync,
-		isPending: isWithdrawTokenPending,
-		isSuccess: isWithdrawTokenSuccess,
-	} = useWriteContract();
-
 	const handleWithdraw = useCallback(async () => {
 		if (!(TOKEN_MARKET_ADDRESS && withdrawAmount)) return;
 		const amountWei = parseUnits(withdrawAmount, 18);
@@ -146,9 +138,11 @@ export function AdminPageContent() {
 		}
 	}, [approveAmount, decimals, decimalsNum, approveMutateAsync]);
 
+	const symbolStr = typeof symbol === 'string' ? symbol : '';
+
 	if (!TOKEN_MARKET_ADDRESS) {
 		return (
-			<section className='w-full max-w-lg rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6'>
+			<section className='mx-auto w-full max-w-lg rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6'>
 				<p className='text-amber-200 text-sm'>
 					请配置 NEXT_PUBLIC_TOKEN_MARKET_ADDRESS 后使用管理员功能。
 				</p>
@@ -158,7 +152,7 @@ export function AdminPageContent() {
 
 	if (!isOwner && address && marketOwner) {
 		return (
-			<section className='w-full max-w-lg rounded-2xl border border-red-500/30 bg-red-500/5 p-6'>
+			<section className='mx-auto w-full max-w-lg rounded-2xl border border-red-500/30 bg-red-500/5 p-6'>
 				<p className='text-red-200 text-sm'>
 					当前钱包不是市场合约管理员，无法操作。
 				</p>
@@ -168,183 +162,220 @@ export function AdminPageContent() {
 
 	if (!address) {
 		return (
-			<section className='w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6'>
+			<section className='mx-auto w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6'>
 				<p className='text-[#94A3B8] text-sm'>请先连接钱包。</p>
 			</section>
 		);
 	}
 
+	const formattedMarketEth =
+		marketEthBalance?.value != null
+			? formatUnits(marketEthBalance.value, 18)
+			: '–';
+	const formattedMarketToken =
+		marketTokenBalance != null &&
+		typeof marketTokenBalance === 'bigint' &&
+		decimals != null
+			? formatUnits(marketTokenBalance, decimalsNum)
+			: '–';
+
 	return (
 		<ChainGuard configMessage={null} configured={!!TOKEN_MARKET_ADDRESS}>
-			<section
-				aria-labelledby='admin-title'
-				className='w-full max-w-lg space-y-8 rounded-2xl border border-white/10 bg-white/5 p-6'
-			>
-				<h1
-					className='font-heading font-semibold text-[#F8FAFC] text-xl'
-					id='admin-title'
-				>
-					管理员
-				</h1>
-
-				{/* 1. withdrawETH：从市场合约提走 ETH */}
-				<div className='space-y-3'>
-					<h2 className='font-heading font-medium text-[#F8FAFC] text-base'>
-						提取 ETH（withdrawETH）
-					</h2>
-					<p className='text-[#94A3B8] text-sm'>
-						从市场合约提取 ETH 到当前钱包（仅管理员）。
-					</p>
-					<p className='font-medium text-[#FBBF24] text-sm'>
-						市场合约当前 ETH 余额:{' '}
-						{marketEthBalance?.value != null
-							? formatUnits(marketEthBalance.value, 18)
-							: '–'}{' '}
-						ETH
-					</p>
-					<p className='font-medium text-[#FBBF24] text-sm'>
-						市场合约当前 {typeof symbol === 'string' ? symbol : 'Token'} 余额:{' '}
-						{marketTokenBalance != null &&
-						typeof marketTokenBalance === 'bigint' &&
-						decimals != null
-							? formatUnits(marketTokenBalance, decimalsNum)
-							: '–'}{' '}
-						{typeof symbol === 'string' ? symbol : ''}
-					</p>
-					<div>
-						<label
-							className='mb-1 block text-[#94A3B8] text-sm'
-							htmlFor='admin-withdraw-amount'
-						>
-							ETH 数量
-						</label>
-						<input
-							className='w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]'
-							id='admin-withdraw-amount'
-							inputMode='decimal'
-							onChange={(e) => setWithdrawAmount(e.target.value)}
-							placeholder='0'
-							type='text'
-							value={withdrawAmount}
-						/>
-					</div>
-					{isWithdrawSuccess && (
-						<p className='text-emerald-400 text-sm' role='status'>
-							提取已提交成功
+			<div className='space-y-6'>
+				<div className='grid gap-4 sm:grid-cols-3'>
+					<div className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'>
+						<p className='text-[#94A3B8] text-xs uppercase tracking-wider'>
+							市场 ETH 余额
 						</p>
-					)}
-					<Button
-						className={cn(
-							'min-h-[44px] w-full cursor-pointer bg-[#8B5CF6] text-white hover:bg-[#7C3AED] disabled:cursor-not-allowed disabled:opacity-50',
-						)}
-						disabled={
-							isWithdrawPending ||
-							!withdrawAmount ||
-							Number.isNaN(Number(withdrawAmount)) ||
-							Number(withdrawAmount) <= 0
-						}
-						onClick={handleWithdraw}
-						type='button'
-					>
-						{isWithdrawPending ? '提取中…' : '提取 ETH'}
-					</Button>
-				</div>
-
-				{/* 2. 转入 ETH 到市场合约 */}
-				<div className='space-y-3 border-white/10 border-t pt-6'>
-					<h2 className='font-heading font-medium text-[#F8FAFC] text-base'>
-						转入 ETH 到市场
-					</h2>
-					<p className='text-[#94A3B8] text-sm'>
-						从当前钱包向市场合约转入 ETH（用于用户购买 Token 时支付）。
-					</p>
-					<div>
-						<label
-							className='mb-1 block text-[#94A3B8] text-sm'
-							htmlFor='admin-deposit-eth'
-						>
-							ETH 数量
-						</label>
-						<input
-							className='w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]'
-							id='admin-deposit-eth'
-							inputMode='decimal'
-							onChange={(e) => setDepositEthAmount(e.target.value)}
-							placeholder='0'
-							type='text'
-							value={depositEthAmount}
-						/>
+						<p className='mt-1 font-heading font-semibold text-[#FBBF24] text-lg'>
+							{formattedMarketEth} ETH
+						</p>
 					</div>
-					<Button
-						className={cn(
-							'min-h-[44px] w-full cursor-pointer bg-[#F59E0B] text-[#0F172A] hover:bg-[#FBBF24] disabled:cursor-not-allowed disabled:opacity-50',
-						)}
-						disabled={
-							isDepositPending ||
-							!depositEthAmount ||
-							Number.isNaN(Number(depositEthAmount)) ||
-							Number(depositEthAmount) <= 0
-						}
-						onClick={handleDepositEth}
-						type='button'
-					>
-						{isDepositPending ? '转入中…' : '转入 ETH 到市场'}
-					</Button>
+					<div className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'>
+						<p className='text-[#94A3B8] text-xs uppercase tracking-wider'>
+							市场 {symbolStr || 'Token'} 余额
+						</p>
+						<p className='mt-1 font-heading font-semibold text-[#FBBF24] text-lg'>
+							{formattedMarketToken} {symbolStr}
+						</p>
+					</div>
+					<div className='rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm'>
+						<p className='text-[#94A3B8] text-xs uppercase tracking-wider'>
+							管理员状态
+						</p>
+						<p className='mt-1 font-heading font-semibold text-emerald-400 text-lg'>
+							已验证
+						</p>
+					</div>
 				</div>
 
-				{/* 3. Token approve 给 market */}
-				<div className='space-y-3 border-white/10 border-t pt-6'>
-					<h2 className='font-heading font-medium text-[#F8FAFC] text-base'>
+				<div className='grid gap-6 lg:grid-cols-2'>
+					<section
+						aria-labelledby='withdraw-title'
+						className='rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl'
+					>
+						<h2
+							className='mb-2 font-heading font-semibold text-[#F8FAFC] text-lg'
+							id='withdraw-title'
+						>
+							提取 ETH
+						</h2>
+						<p className='mb-4 text-[#94A3B8] text-sm'>
+							从市场合约提取 ETH 到当前钱包（仅管理员）。
+						</p>
+						<div className='space-y-4'>
+							<div>
+								<label
+									className='mb-1 block text-[#94A3B8] text-sm'
+									htmlFor='admin-withdraw-amount'
+								>
+									ETH 数量
+								</label>
+								<input
+									className='w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]'
+									id='admin-withdraw-amount'
+									inputMode='decimal'
+									onChange={(e) => setWithdrawAmount(e.target.value)}
+									placeholder='0'
+									type='text'
+									value={withdrawAmount}
+								/>
+							</div>
+							{isWithdrawSuccess && (
+								<p className='text-emerald-400 text-sm' role='status'>
+									提取已提交成功
+								</p>
+							)}
+							<Button
+								className={cn(
+									'min-h-[44px] w-full cursor-pointer bg-[#8B5CF6] text-white hover:bg-[#7C3AED] disabled:cursor-not-allowed disabled:opacity-50',
+								)}
+								disabled={
+									isWithdrawPending ||
+									!withdrawAmount ||
+									Number.isNaN(Number(withdrawAmount)) ||
+									Number(withdrawAmount) <= 0
+								}
+								onClick={handleWithdraw}
+								type='button'
+							>
+								{isWithdrawPending ? '提取中…' : '提取 ETH'}
+							</Button>
+						</div>
+					</section>
+
+					<section
+						aria-labelledby='deposit-title'
+						className='rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl'
+					>
+						<h2
+							className='mb-2 font-heading font-semibold text-[#F8FAFC] text-lg'
+							id='deposit-title'
+						>
+							转入 ETH 到市场
+						</h2>
+						<p className='mb-4 text-[#94A3B8] text-sm'>
+							从当前钱包向市场合约转入 ETH（用于用户赎回时支付）。
+						</p>
+						<div className='space-y-4'>
+							<div>
+								<label
+									className='mb-1 block text-[#94A3B8] text-sm'
+									htmlFor='admin-deposit-eth'
+								>
+									ETH 数量
+								</label>
+								<input
+									className='w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]'
+									id='admin-deposit-eth'
+									inputMode='decimal'
+									onChange={(e) => setDepositEthAmount(e.target.value)}
+									placeholder='0'
+									type='text'
+									value={depositEthAmount}
+								/>
+							</div>
+							<Button
+								className={cn(
+									'min-h-[44px] w-full cursor-pointer bg-[#F59E0B] text-[#0F172A] hover:bg-[#FBBF24] disabled:cursor-not-allowed disabled:opacity-50',
+								)}
+								disabled={
+									isDepositPending ||
+									!depositEthAmount ||
+									Number.isNaN(Number(depositEthAmount)) ||
+									Number(depositEthAmount) <= 0
+								}
+								onClick={handleDepositEth}
+								type='button'
+							>
+								{isDepositPending ? '转入中…' : '转入 ETH 到市场'}
+							</Button>
+						</div>
+					</section>
+				</div>
+
+				<section
+					aria-labelledby='approve-title'
+					className='rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl'
+				>
+					<h2
+						className='mb-2 font-heading font-semibold text-[#F8FAFC] text-lg'
+						id='approve-title'
+					>
 						Token 授权给市场
 					</h2>
-					<p className='text-[#94A3B8] text-sm'>
+					<p className='mb-4 text-[#94A3B8] text-sm'>
 						授权市场合约可从当前钱包划转 Token（用于用户购买时从你账户转出 Token
 						到市场）。
 					</p>
-					<div>
-						<label
-							className='mb-1 block text-[#94A3B8] text-sm'
-							htmlFor='admin-approve-amount'
-						>
-							授权数量
-						</label>
-						<input
-							className='w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]'
-							id='admin-approve-amount'
-							inputMode='decimal'
-							onChange={(e) => setApproveAmount(e.target.value)}
-							placeholder='0'
-							type='text'
-							value={approveAmount}
-						/>
-						{typeof symbol === 'string' && (
-							<span className='mt-1 block text-[#64748B] text-xs'>
-								单位: {symbol}
-							</span>
-						)}
+					<div className='grid gap-4 lg:grid-cols-2'>
+						<div>
+							<label
+								className='mb-1 block text-[#94A3B8] text-sm'
+								htmlFor='admin-approve-amount'
+							>
+								授权数量
+							</label>
+							<input
+								className='w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]'
+								id='admin-approve-amount'
+								inputMode='decimal'
+								onChange={(e) => setApproveAmount(e.target.value)}
+								placeholder='0'
+								type='text'
+								value={approveAmount}
+							/>
+							{symbolStr && (
+								<span className='mt-1 block text-[#64748B] text-xs'>
+									单位: {symbolStr}
+								</span>
+							)}
+						</div>
+						<div className='flex flex-col justify-end gap-3'>
+							{isApproveSuccess && (
+								<p className='text-emerald-400 text-sm' role='status'>
+									授权已提交成功
+								</p>
+							)}
+							<Button
+								className={cn(
+									'min-h-[44px] w-full cursor-pointer border border-[#8B5CF6] bg-transparent text-[#8B5CF6] hover:bg-[#8B5CF6]/10 disabled:cursor-not-allowed disabled:opacity-50',
+								)}
+								disabled={
+									isApprovePending ||
+									!approveAmount ||
+									Number.isNaN(Number(approveAmount)) ||
+									Number(approveAmount) <= 0
+								}
+								onClick={handleApproveForMarket}
+								type='button'
+							>
+								{isApprovePending ? '授权中…' : '授权给市场'}
+							</Button>
+						</div>
 					</div>
-					{isApproveSuccess && (
-						<p className='text-emerald-400 text-sm' role='status'>
-							授权已提交成功
-						</p>
-					)}
-					<Button
-						className={cn(
-							'min-h-[44px] w-full cursor-pointer border border-[#8B5CF6] bg-transparent text-[#8B5CF6] hover:bg-[#8B5CF6]/10 disabled:cursor-not-allowed disabled:opacity-50',
-						)}
-						disabled={
-							isApprovePending ||
-							!approveAmount ||
-							Number.isNaN(Number(approveAmount)) ||
-							Number(approveAmount) <= 0
-						}
-						onClick={handleApproveForMarket}
-						type='button'
-					>
-						{isApprovePending ? '授权中…' : '授权给市场'}
-					</Button>
-				</div>
-			</section>
+				</section>
+			</div>
 		</ChainGuard>
 	);
 }

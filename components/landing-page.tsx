@@ -359,6 +359,7 @@ export function LandingPage() {
 					<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
 						{FEATURED_DAPPS.map((dapp, index) => (
 							<motion.div
+								className='h-full'
 								initial={{ opacity: 0, y: revealOffset }}
 								key={dapp.name}
 								transition={{
@@ -372,7 +373,7 @@ export function LandingPage() {
 							>
 								<Link
 									className={cn(
-										'group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl transition-colors duration-200 hover:border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F0F23]',
+										'group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl transition-colors duration-200 hover:border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F0F23]',
 									)}
 									href={dapp.href}
 								>
@@ -405,7 +406,9 @@ export function LandingPage() {
 									<h3 className='mb-1 font-heading font-semibold text-[#E2E8F0] text-lg'>
 										{dapp.name}
 									</h3>
-									<p className='mb-4 text-[#94A3B8] text-sm'>{dapp.desc}</p>
+									<p className='mb-4 flex-1 text-[#94A3B8] text-sm'>
+										{dapp.desc}
+									</p>
 									<span className='inline-flex items-center gap-1 font-medium text-[#7C3AED] text-sm'>
 										Open
 										<motion.span

@@ -51,7 +51,7 @@ export function ChainGuard({
 
 	if (!configured && configMessage) {
 		return (
-			<section className='w-full max-w-lg rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6'>
+			<section className='mx-auto w-full max-w-lg rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6'>
 				{configMessage}
 			</section>
 		);
@@ -59,7 +59,7 @@ export function ChainGuard({
 
 	if (isWrongChain) {
 		return (
-			<section className='w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6'>
+			<section className='mx-auto w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6'>
 				<p className='mb-4 text-[#94A3B8] text-sm'>
 					请切换到 Sepolia 测试网后继续。
 				</p>
