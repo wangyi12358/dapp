@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "animation-designer": {
+      "source": "daffy0208/ai-dev-standards",
+      "sourceType": "github",
+      "computedHash": "9ba671b12ed4102af35847c6b9edd29f4036a89fdba32901c7854b79c57e1561"
+    }
+  }
+}
